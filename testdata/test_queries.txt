@@ -1,0 +1,4 @@
+username1@example.com:password1
+username1@example.com:password
+username1@example.com:
+notexposed@example.com:1234

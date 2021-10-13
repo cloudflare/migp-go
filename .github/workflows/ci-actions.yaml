@@ -1,0 +1,30 @@
+name: MIGP
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  amd64_job:
+    name: Go-${{matrix.GOVER}}/amd64
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        GOVER: ['1.17', '1.16']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Linting
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.42
+      - name: Setup Go-${{ matrix.GOVER }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.GOVER }}
+      - name: Building
+        run: go build -v ./...
+      - name: Testing
+        run: go test -v ./...
