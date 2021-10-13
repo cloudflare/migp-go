@@ -26,7 +26,7 @@ Read entries in from the input file and query a MIGP server.  By default, the
 target is set to a locally-running MIGP server, but the target flag can be used
 to target production MIGP servers such as https://migp.cloudflare.com.
 
-	echo testdata/test_queries.txt | bin/client [--target <target-server>]
+	cat testdata/test_queries.txt | bin/client [--target <target-server>]
 
 ## Advanced usage
 
