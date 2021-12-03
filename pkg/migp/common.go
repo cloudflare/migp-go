@@ -36,6 +36,10 @@ const (
 	HeaderSize = CtxtKeyCheckSize + 5
 )
 
+var (
+	OprfInfo = []byte("MIGP oprf info")
+)
+
 // Config contains MIGP configuration used both clients and servers.
 type Config struct {
 	Version           uint16       `json:"version"`

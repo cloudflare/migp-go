@@ -115,7 +115,7 @@ func (ctx ClientRequestContext) Finalize(response ServerResponse) (BreachStatus,
 
 	oprfOutput, err := ctx.client.oprfClient.Finalize(ctx.oprfRequest, &oprf.Evaluation{
 		Elements: []oprf.SerializedElement{response.EvaluatedElement},
-	})
+	}, OprfInfo)
 	if err != nil {
 		return NotInBreach, nil, err
 	}

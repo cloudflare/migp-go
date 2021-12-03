@@ -5,6 +5,7 @@ package migp
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -86,7 +87,7 @@ func (s *Server) Config() *ServerConfig {
 
 // DefaultServerConfig generates a new default server state with a freshly keyed OPRF instance.
 func DefaultServerConfig() ServerConfig {
-	privateKey, err := oprf.GenerateKey(DefaultOPRFSuite)
+	privateKey, err := oprf.GenerateKey(DefaultOPRFSuite, rand.Reader)
 	if err != nil {
 		// This will only occur in the event of developer error as we
 		// supply working defaults.
@@ -136,7 +137,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 // deriveBucketEntryKey derives a bucket entry key from a credential pair
 func (s *Server) deriveBucketEntryKey(username string, password string) ([]byte, error) {
 	input := s.slowHasher.Hash(serializeUserPassword(username, password))
-	return s.oprfServer.FullEvaluate(input)
+	return s.oprfServer.FullEvaluate(input, OprfInfo)
 }
 
 // BucketID returns the bucket ID for the given username
@@ -223,7 +224,7 @@ func (s *Server) HandleRequest(request ClientRequest, kv Getter) (ServerResponse
 		return ServerResponse{}, errors.New("requested version doesn't match server version")
 	}
 
-	evaluation, err := s.oprfServer.Evaluate([]oprf.Blinded{request.BlindElement})
+	evaluation, err := s.oprfServer.Evaluate([]oprf.Blinded{request.BlindElement}, OprfInfo)
 	if err != nil {
 		return ServerResponse{}, err
 	}
