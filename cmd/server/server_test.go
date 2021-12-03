@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"code.cfops.it/crypto/migp/pkg/migp"
+	"github.com/cloudflare/migp-go/pkg/migp"
 )
 
 // TestServer spins up a MIGP server and runs a series of tests
