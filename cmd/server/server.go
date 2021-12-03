@@ -10,8 +10,8 @@ import (
 	"log"
 	"net/http"
 
-	"code.cfops.it/crypto/migp/pkg/migp"
-	"code.cfops.it/crypto/migp/pkg/mutator"
+	"github.com/cloudflare/migp-go/pkg/migp"
+	"github.com/cloudflare/migp-go/pkg/mutator"
 )
 
 // newServer returns a new server initialized using the provided configuration

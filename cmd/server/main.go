@@ -16,7 +16,7 @@ import (
 	"os"
 	"strings"
 
-	"code.cfops.it/crypto/migp/pkg/migp"
+	"github.com/cloudflare/migp-go/pkg/migp"
 )
 
 func main() {

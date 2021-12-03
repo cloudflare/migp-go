@@ -1,4 +1,4 @@
-module code.cfops.it/crypto/migp
+module github.com/cloudflare/migp-go
 
 go 1.16
 
