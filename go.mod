@@ -3,6 +3,6 @@ module github.com/cloudflare/migp-go
 go 1.16
 
 require (
-	github.com/cloudflare/circl v1.0.1-0.20210617011705-574b5191de78
-	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
+	github.com/cloudflare/circl v1.1.1-0.20211202201456-cd788e30354b
+	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
 )

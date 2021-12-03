@@ -5,6 +5,7 @@ package migp
 
 import (
 	"bytes"
+	"crypto/rand"
 	"testing"
 
 	"github.com/cloudflare/circl/oprf"
@@ -24,7 +25,7 @@ func TestEncryptDecrypt(t *testing.T) {
 		{[]byte("abc345fds!#"), MetadataBreachedUsername, []byte("abc")},
 	}
 
-	privateKey, err := oprf.GenerateKey(DefaultOPRFSuite)
+	privateKey, err := oprf.GenerateKey(DefaultOPRFSuite, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,13 +54,13 @@ func TestEncryptDecrypt(t *testing.T) {
 		}
 
 		// Server evaluates blinded element
-		evaluatedMessage, err := oprfServer.Evaluate(oprfRequest.BlindedElements())
+		evaluatedMessage, err := oprfServer.Evaluate(oprfRequest.BlindedElements(), OprfInfo)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// Client and server finalize to derive shared secret
-		clientSecrets, err := oprfClient.Finalize(oprfRequest, evaluatedMessage)
+		clientSecrets, err := oprfClient.Finalize(oprfRequest, evaluatedMessage, OprfInfo)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -67,7 +68,7 @@ func TestEncryptDecrypt(t *testing.T) {
 			t.Fatal("invalid Finalize response")
 		}
 		clientSecret := clientSecrets[0]
-		serverSecret, err := oprfServer.FullEvaluate(test.secret)
+		serverSecret, err := oprfServer.FullEvaluate(test.secret, OprfInfo)
 		if err != nil {
 			t.Fatal(err)
 		}
