@@ -72,16 +72,14 @@ func NewClient(cfg Config) (*Client, error) {
 }
 
 // BucketID returns the bucket ID for the given username
-func (c *Client) BucketID(username string) uint32 {
-	return bucketHashToID(c.bucketHasher.Hash([]byte(username)), c.bucketIDBitSize)
+func (c *Client) BucketID(username []byte) uint32 {
+	return bucketHashToID(c.bucketHasher.Hash(username), c.bucketIDBitSize)
 }
 
 // Request generates a client request byte string and a ClientRequest struct,
 // given a username and password
-func (c Client) Request(username string, pw string) (ClientRequest, ClientRequestContext, error) {
-	bucketIDHex := BucketIDToHex(c.BucketID(username))
-
-	input := c.slowHasher.Hash(serializeUserPassword(username, pw))
+func (c Client) Request(username, password []byte) (ClientRequest, ClientRequestContext, error) {
+	input := c.slowHasher.Hash(serializeUsernamePassword(username, password))
 
 	oprfRequest, err := c.oprfClient.Request([][]byte{input})
 	if err != nil {
@@ -94,7 +92,7 @@ func (c Client) Request(username string, pw string) (ClientRequest, ClientReques
 
 	request := ClientRequest{
 		Version:      uint32(c.version),
-		BucketID:     bucketIDHex,
+		BucketID:     BucketIDToHex(c.BucketID(username)),
 		BlindElement: blindedElements[0],
 	}
 	context := ClientRequestContext{
@@ -156,7 +154,7 @@ func (ctx ClientRequestContext) Finalize(response ServerResponse) (BreachStatus,
 }
 
 // Query submits a MIGP query to the target MIGP server.
-func Query(cfg Config, targetURL, username, password string) (BreachStatus, []byte, error) {
+func Query(cfg Config, targetURL string, username, password []byte) (BreachStatus, []byte, error) {
 	client, err := NewClient(cfg)
 	if err != nil {
 		return 0, nil, err

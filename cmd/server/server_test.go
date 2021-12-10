@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"net/http/httptest"
 	"testing"
 
@@ -13,9 +14,9 @@ import (
 // TestServer spins up a MIGP server and runs a series of tests
 func TestServer(t *testing.T) {
 
-	testUsername := "username1"
-	testPassword := "password1"
-	testMetadata := "test metadata"
+	testUsername := []byte("username1")
+	testPassword := []byte("password1")
+	testMetadata := []byte("test metadata")
 
 	s, err := newServer(migp.DefaultServerConfig())
 	if err != nil {
@@ -34,8 +35,8 @@ func TestServer(t *testing.T) {
 	if status != migp.NotInBreach {
 		t.Fatalf("status: want %s, got %s", migp.NotInBreach, status)
 	}
-	if string(metadata) != "" {
-		t.Fatalf("metadata: want %s, got %s", "", string(metadata))
+	if len(metadata) != 0 {
+		t.Fatalf("metadata: want %d, got %d", 0, len(metadata))
 	}
 
 	// insert test record
@@ -52,7 +53,7 @@ func TestServer(t *testing.T) {
 	if status != migp.InBreach {
 		t.Fatalf("status: want %s, got %s", migp.InBreach, status)
 	}
-	if string(metadata) != testMetadata {
+	if !bytes.Equal(metadata, testMetadata) {
 		t.Fatalf("metadata: want %s, got %s", testMetadata, string(metadata))
 	}
 }

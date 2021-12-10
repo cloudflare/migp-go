@@ -7,13 +7,13 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/cloudflare/migp-go/pkg/migp"
 )
@@ -83,7 +83,7 @@ func main() {
 
 	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
-		fields := strings.SplitN(scanner.Text(), ":", 2)
+		fields := bytes.SplitN(scanner.Bytes(), []byte(":"), 2)
 		if len(fields) < 2 {
 			continue
 		}
@@ -94,7 +94,7 @@ func main() {
 		} else {
 
 			if !showPassword {
-				password = ""
+				password = nil
 			}
 			out, err := json.Marshal(struct {
 				Username string `json:"username"`
@@ -102,8 +102,8 @@ func main() {
 				Status   string `json:"status"`
 				Metadata string `json:"metadata,omitempty"`
 			}{
-				Username: username,
-				Password: password,
+				Username: string(username),
+				Password: string(password),
 				Status:   status.String(),
 				Metadata: string(metadata),
 			})

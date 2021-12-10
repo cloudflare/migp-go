@@ -23,19 +23,19 @@ func (kv *KVMock) Get(key string) ([]byte, error) {
 func TestQuery(t *testing.T) {
 
 	testCases := []struct {
-		Username     string
-		Password     string
+		Username     []byte
+		Password     []byte
 		MetadataFlag MetadataType
 		Metadata     []byte
 		OutputValue  BreachStatus
 	}{
-		{"test@mail.com", "password1234", MetadataBreachedPassword, []byte("my favorite breach"), InBreach},
-		{"TESTt@mail.com", "password1234", MetadataBreachedPassword, []byte("my favorite breach"), InBreach},
-		{"test@mail.com", "password3214", MetadataBreachedPassword, []byte("my favorite breach, flipped"), InBreach},
-		{"", "", MetadataSimilarPassword, []byte("my favorite breach"), SimilarInBreach},
-		{"!!#%test", "Password1231", MetadataSimilarPassword, nil, SimilarInBreach},
-		{"test2", "!!&*F(DSbjklzd", MetadataBreachedPassword, []byte("$#!!%BVAF"), InBreach},
-		{"username", "password5678", MetadataBreachedUsername, []byte("my favorite breach"), UsernameInBreach},
+		{[]byte("test@mail.com"), []byte("password1234"), MetadataBreachedPassword, []byte("my favorite breach"), InBreach},
+		{[]byte("TESTt@mail.com"), []byte("password1234"), MetadataBreachedPassword, []byte("my favorite breach"), InBreach},
+		{[]byte("test@mail.com"), []byte("password3214"), MetadataBreachedPassword, []byte("my favorite breach, flipped"), InBreach},
+		{[]byte{}, []byte{}, MetadataSimilarPassword, []byte("my favorite breach"), SimilarInBreach},
+		{[]byte("!!#%test"), []byte("Password1231"), MetadataSimilarPassword, nil, SimilarInBreach},
+		{[]byte("test2"), []byte("!!&*F(DSbjklzd"), MetadataBreachedPassword, []byte("$#!!%BVAF"), InBreach},
+		{[]byte("username"), []byte("password5678"), MetadataBreachedUsername, []byte("my favorite breach"), UsernameInBreach},
 	}
 
 	// initialize server with fresh random key
@@ -88,7 +88,7 @@ func TestQuery(t *testing.T) {
 	}
 
 	// test for an uninserted entry
-	username, password := "username", "password"
+	username, password := []byte("username"), []byte("password")
 	request, clientFinalize, err := client.Request(username, password)
 	if err != nil {
 		t.Error(err)

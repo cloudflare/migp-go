@@ -16,6 +16,10 @@ import (
 // serialized and deserialized
 func TestSerialization(t *testing.T) {
 
+	testUsername := []byte("username1")
+	testPassword := []byte("password1")
+	testMetadata := []byte("test metadata")
+
 	// initialize server with fresh random key
 	server, err := NewServer(DefaultServerConfig())
 	if err != nil {
@@ -40,12 +44,12 @@ func TestSerialization(t *testing.T) {
 		t.Error("serialization failed: version not equal")
 	}
 
-	ciphertextA, err := server.EncryptBucketEntry("testuser", "testpassword", MetadataSimilarPassword, []byte("helloworld"))
+	ciphertextA, err := server.EncryptBucketEntry(testUsername, testPassword, MetadataSimilarPassword, testMetadata)
 	if err != nil {
 		t.Error(err)
 	}
 
-	ciphertextB, err := server2.EncryptBucketEntry("testuser", "testpassword", MetadataSimilarPassword, []byte("helloworld"))
+	ciphertextB, err := server2.EncryptBucketEntry(testUsername, testPassword, MetadataSimilarPassword, testMetadata)
 	if err != nil {
 		t.Error(err)
 	}

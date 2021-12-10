@@ -149,25 +149,20 @@ func (bs BreachStatus) String() string {
 	}
 }
 
-// encodeString encodes input `data` using a two-byte big-endian length prefix.
-func encodeString(data string) []byte {
-	if len(data) > (1 << 16) {
-		panic("Length overflow")
-	}
-	lengthBuffer := make([]byte, 2)
-	bytes := []byte(data)
-	binary.BigEndian.PutUint16(lengthBuffer, uint16(len(bytes)))
-	return append(lengthBuffer, bytes...)
-}
-
-// serializeUserPassword generates a byte string consisting of username and
+// serializeUsernamePassword generates a byte string consisting of username and
 // password.  We use a simple prefix-free length-based encoding of the username
 // and password, where lengths are encoded as 16-bit big-endian unsigned
 // integers.  Note that metadata is not included in this serialization.
-func serializeUserPassword(username string, password string) []byte {
-	usernameBuffer := encodeString(username)
-	passwordBuffer := encodeString(password)
-	return append(usernameBuffer, passwordBuffer...)
+func serializeUsernamePassword(username, password []byte) []byte {
+	if len(username) > (1<<16) || len(password) > (1<<16) {
+		panic("Length overflow")
+	}
+	buf := make([]byte, 4+len(username)+len(password))
+	binary.BigEndian.PutUint16(buf, uint16(len(username)))
+	copy(buf[2:], username)
+	binary.BigEndian.PutUint16(buf[2+len(username):], uint16(len(password)))
+	copy(buf[4+len(username):], password)
+	return buf
 }
 
 // bucketHashToID returns a uint32 bucket ID given a bucket hash and the bucket
