@@ -43,6 +43,7 @@ func (s *server) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
 	mux.HandleFunc("/evaluate", s.handleEvaluate)
+	mux.HandleFunc("/config", s.handleConfig)
 	return mux
 }
 
@@ -88,6 +89,16 @@ func (s *server) insert(username, password, metadata string, numVariants int, in
 // handleIndex returns a welcome message
 func (s *server) handleIndex(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "Welcome to the MIGP demo server\n")
+}
+
+// handleConfig returns the MIGP configuration
+func (s *server) handleConfig(w http.ResponseWriter, req *http.Request) {
+	encoder := json.NewEncoder(w)
+	cfg := s.migpServer.Config().Config
+	if err := encoder.Encode(cfg); err != nil {
+		log.Println("Writing response failed:", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 // handleEvaluate serves a request from a MIGP client
