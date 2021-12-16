@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -22,7 +23,7 @@ func main() {
 	var dumpConfig, showPassword bool
 	var err error
 
-	flag.StringVar(&configFile, "config", "", "Client configuration file")
+	flag.StringVar(&configFile, "config", "", "Client configuration file (default: retrieve from server)")
 	flag.BoolVar(&dumpConfig, "dump-config", false, "Dump the client configuration to stdout and exit")
 	flag.BoolVar(&showPassword, "show-password", false, "Show the password in the output")
 	flag.StringVar(&inputFilename, "infile", "-", "input file of credentials to query in the format <username>:<password> ('-' for stdin)")
@@ -32,6 +33,7 @@ func main() {
 
 	var cfg migp.Config
 	if configFile != "" {
+		// use the provided config file
 		data, err := os.ReadFile(configFile)
 		if err != nil {
 			log.Fatal(err)
@@ -41,7 +43,18 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-		cfg = migp.DefaultConfig()
+		// retrieve the config from the server
+		resp, err := http.Get(targetURL + "/config")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			log.Fatalf("Unable to retrieve MIGP config from target %q: status code %d", targetURL, resp.StatusCode)
+		}
+		decoder := json.NewDecoder(resp.Body)
+		if err := decoder.Decode(&cfg); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if dumpConfig {
@@ -54,6 +67,10 @@ func main() {
 			log.Fatal(err)
 		}
 		return
+	}
+
+	if cfg.Version != migp.DefaultMIGPVersion {
+		log.Printf("WARN: Your MIGP library version (%d) does not match the version specified in the config (%d) and may not be compatible.", migp.DefaultMIGPVersion, cfg.Version)
 	}
 
 	inputFile := os.Stdin
