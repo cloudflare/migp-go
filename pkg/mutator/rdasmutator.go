@@ -4,10 +4,12 @@
 package mutator
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
-	"strings"
 	"unicode"
+
+	"github.com/spaolacci/murmur3"
 )
 
 // RDasRule struct is for initizializing the re-ordered Das rules. Rules are of
@@ -52,11 +54,9 @@ func switchCase(b byte) (byte, error) {
 	r := rune(b)
 	if unicode.IsLetter(r) {
 		if unicode.IsUpper(r) {
-			newc := unicode.ToLower(r)
-			return byte(newc), nil
+			return byte(unicode.ToLower(r)), nil
 		} else if unicode.IsLower(r) {
-			newc := unicode.ToUpper(r)
-			return byte(newc), nil
+			return byte(unicode.ToUpper(r)), nil
 		} else {
 			return 0, errors.New("invalid rune")
 		}
@@ -67,15 +67,15 @@ func switchCase(b byte) (byte, error) {
 // Mutate generates up to requested number of mutations. Returns a set of
 // unique strings.  May return fewer than requested number, caller should
 // check.
-func (m *RDasMutator) Mutate(password string, num int) []string {
-	var mutations []string
+func (m *RDasMutator) Mutate(password []byte, num int) [][]byte {
 
 	if len(m.dasRules) == 0 {
 		panic("RDasMutator used without being initialized")
 	}
 
-	seen := make(map[string]struct{})
-	seen[password] = struct{}{}
+	mutations := make([][]byte, 0, num)
+	seen := make(map[uint32]struct{})
+	seen[murmur3.Sum32(password)] = struct{}{}
 	for i, j := 0, 0; j < num && i < len(m.dasRules); i++ {
 		s := password
 		rule := m.dasRules[i]
@@ -101,62 +101,74 @@ func (m *RDasMutator) Mutate(password string, num int) []string {
 			panic("One of the dasRules unrecognized")
 		}
 
-		if _, ok := seen[s]; !ok {
+		key := murmur3.Sum32(s)
+		if _, ok := seen[key]; !ok {
 			j++
-			seen[s] = struct{}{}
+			seen[key] = struct{}{}
 			mutations = append(mutations, s)
 		}
 	}
 	return mutations
 }
 
-// changeCap switches the case at the given position, if it's a letter
-func changeCap(oldStr string, position int) string {
-	newStr := oldStr
+// changeCap returns a copy of the buffer with the case switched at the given
+// position, if it's a letter
+func changeCap(oldBuf []byte, position int) []byte {
+	newBuf := make([]byte, len(oldBuf))
+	copy(newBuf, oldBuf)
 	if position < 0 {
-		position = len(oldStr) + position
+		position = len(oldBuf) + position
 	}
-	if position >= 0 && position < len(oldStr) {
-		b, err := switchCase(oldStr[position])
-		if err == nil {
-			newStr = oldStr[:position] + string(b) + oldStr[position+1:]
+	if position >= 0 && position < len(oldBuf) {
+		if b, err := switchCase(oldBuf[position]); err == nil {
+			newBuf[position] = b
 		}
 	}
-	return newStr
+	return newBuf
 }
 
-// deletePortion deletes a prefix or suffix
-func deletePortion(oldStr string, position int) string {
-	newStr := oldStr
-	if position >= 0 && position <= len(oldStr) {
-		newStr = oldStr[position:]
-	} else if position < 0 && len(oldStr)+position >= 0 {
-		newStr = oldStr[:len(oldStr)+position]
+// deletePortion returns a copy of the buffer with a deleted prefix or suffix
+func deletePortion(oldBuf []byte, position int) []byte {
+	var newBuf []byte
+	if position >= 0 && position <= len(oldBuf) {
+		newBuf = make([]byte, len(oldBuf)-position)
+		copy(newBuf, oldBuf[position:])
+	} else if position < 0 && len(oldBuf)+position >= 0 {
+		newBuf = make([]byte, len(oldBuf)+position)
+		copy(newBuf, oldBuf[:len(oldBuf)+position])
+	} else {
+		newBuf = make([]byte, len(oldBuf))
+		copy(newBuf, oldBuf)
 	}
-	return newStr
+	return newBuf
 }
 
-// insert inserts a substring at the given position
-func insert(oldStr string, position int, string1 string) string {
-	newStr := oldStr
-	if len(oldStr) == 0 && (position == 0 || position == -1) {
-		newStr = string1
+// insert returns a copy of the buffer with a substring inserted at the given
+// position
+func insert(oldBuf []byte, position int, string1 string) []byte {
+	var newBuf []byte
+	if len(oldBuf) == 0 && (position == 0 || position == -1) {
+		newBuf = make([]byte, len(string1))
+		copy(newBuf, string1)
 	} else {
 		if position < 0 {
-			position = position + len(oldStr) + 1
+			position = position + len(oldBuf) + 1
 		}
-		if position >= 0 && position <= len(oldStr) {
-			newStr = oldStr[:position] + string1 + oldStr[position:]
+		if position >= 0 && position <= len(oldBuf) {
+			newBuf = make([]byte, len(oldBuf)+len(string1))
+			copy(newBuf, oldBuf[:position])
+			copy(newBuf[position:], string1)
+			copy(newBuf[position+len(string1):], oldBuf[position:])
+		} else {
+			newBuf = make([]byte, len(oldBuf))
+			copy(newBuf, oldBuf)
 		}
 	}
-	return newStr
+	return newBuf
 }
 
-// substitute swaps out instances of one substring with another substring
-func substitute(oldStr string, _ int, string1 string, string2 string) string {
-	newStr := oldStr
-	if strings.Contains(oldStr, string1) {
-		newStr = strings.Replace(oldStr, string1, string2, -1)
-	}
-	return newStr
+// substitute returns a copy of the buffer with instances of one substring
+// replaced with another substring
+func substitute(buf []byte, _ int, string1, string2 string) []byte {
+	return bytes.ReplaceAll(buf, []byte(string1), []byte(string2))
 }

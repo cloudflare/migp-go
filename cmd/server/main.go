@@ -9,12 +9,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/cloudflare/migp-go/pkg/migp"
 )
@@ -78,13 +78,13 @@ func main() {
 	log.Printf("Encrypting breach entries: %d successes, %d failures", successCount, failureCount)
 	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
-		fields := strings.SplitN(scanner.Text(), ":", 2)
+		fields := bytes.SplitN(scanner.Bytes(), []byte(":"), 2)
 		if len(fields) < 2 {
 			failureCount += 1
 			continue
 		}
 		username, password := fields[0], fields[1]
-		if err := s.insert(username, password, metadata, numVariants, includeUsernameVariant); err != nil {
+		if err := s.insert(username, password, []byte(metadata), numVariants, includeUsernameVariant); err != nil {
 			failureCount += 1
 			continue
 		}

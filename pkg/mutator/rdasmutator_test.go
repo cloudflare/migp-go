@@ -4,18 +4,19 @@
 package mutator
 
 import (
+	"bytes"
 	"testing"
 )
 
 // TestRdasMutate tests that the mutator produces the expected variants
 func TestRdasMutate(t *testing.T) {
 	tests := []struct {
-		inPw   string
-		outPws []string
+		inPw   []byte
+		outPws [][]byte
 	}{
-		{inPw: "hello", outPws: []string{"Hello", "13hello", "hello1", "777hello", "helloN"}},
-		{inPw: "asdf1234asdf", outPws: []string{"zxcv1234zxcv", "asdf1234asdf1", "asdf1234a", "asdf1234as", "Asdf1234asdf", "asdf1234asdfN"}},
-		{inPw: "", outPws: []string{"1", "13", "777", "N"}},
+		{inPw: []byte("hello"), outPws: [][]byte{[]byte("Hello"), []byte("13hello"), []byte("hello1"), []byte("777hello"), []byte("helloN")}},
+		{inPw: []byte("asdf1234asdf"), outPws: [][]byte{[]byte("zxcv1234zxcv"), []byte("asdf1234asdf1"), []byte("asdf1234a"), []byte("asdf1234as"), []byte("Asdf1234asdf"), []byte("asdf1234asdfN")}},
+		{inPw: nil, outPws: [][]byte{[]byte("1"), []byte("13"), []byte("777"), []byte("N")}},
 	}
 
 	for _, test := range tests {
@@ -23,12 +24,12 @@ func TestRdasMutate(t *testing.T) {
 		variants := mutator.Mutate(test.inPw, 1000)
 		if len(variants) < 100 {
 			t.Errorf("RDasMutator didn't give back at least 100 variants, %s got only: %v",
-				test.inPw, variants)
+				test.inPw, len(variants))
 		}
 		for _, outPw := range test.outPws {
 			found := false
 			for _, variant := range variants {
-				if outPw == variant {
+				if bytes.Equal(outPw, variant) {
 					found = true
 					break
 				}
@@ -44,7 +45,7 @@ func TestRdasMutate(t *testing.T) {
 // BenchmarkRdasMutator100 benchmarks the first 100 mutator rules
 func BenchmarkRdasMutator100(b *testing.B) {
 	m := NewRDasMutator()
-	testPassword := "password1"
+	testPassword := []byte("password1")
 	for i := 0; i < b.N; i++ {
 		_ = m.Mutate(testPassword, 100)
 	}
@@ -53,7 +54,7 @@ func BenchmarkRdasMutator100(b *testing.B) {
 // BenchmarkRdasMutator10 benchmarks the first 10 mutator rules
 func BenchmarkRdasMutator10(b *testing.B) {
 	m := NewRDasMutator()
-	testPassword := "password1"
+	testPassword := []byte("password1")
 	for i := 0; i < b.N; i++ {
 		_ = m.Mutate(testPassword, 10)
 	}

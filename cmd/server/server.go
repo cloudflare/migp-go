@@ -48,10 +48,10 @@ func (s *server) handler() http.Handler {
 }
 
 // insert encrypts a credential pair and stores it in the configured KV store
-func (s *server) insert(username, password, metadata string, numVariants int, includeUsernameVariant bool) error {
+func (s *server) insert(username, password, metadata []byte, numVariants int, includeUsernameVariant bool) error {
 
 	bucketIDHex := migp.BucketIDToHex(s.migpServer.BucketID(username))
-	newEntry, err := s.migpServer.EncryptBucketEntry(username, password, migp.MetadataBreachedPassword, []byte(metadata))
+	newEntry, err := s.migpServer.EncryptBucketEntry(username, password, migp.MetadataBreachedPassword, metadata)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (s *server) insert(username, password, metadata string, numVariants int, in
 
 	passwordVariants := mutator.NewRDasMutator().Mutate(password, numVariants)
 	for _, variant := range passwordVariants {
-		newEntry, err = s.migpServer.EncryptBucketEntry(username, variant, migp.MetadataSimilarPassword, []byte(metadata))
+		newEntry, err = s.migpServer.EncryptBucketEntry(username, variant, migp.MetadataSimilarPassword, metadata)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func (s *server) insert(username, password, metadata string, numVariants int, in
 	}
 
 	if includeUsernameVariant {
-		newEntry, err = s.migpServer.EncryptBucketEntry(username, "", migp.MetadataBreachedUsername, []byte(metadata))
+		newEntry, err = s.migpServer.EncryptBucketEntry(username, nil, migp.MetadataBreachedUsername, metadata)
 		if err != nil {
 			return err
 		}

@@ -135,21 +135,21 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 }
 
 // deriveBucketEntryKey derives a bucket entry key from a credential pair
-func (s *Server) deriveBucketEntryKey(username string, password string) ([]byte, error) {
-	input := s.slowHasher.Hash(serializeUserPassword(username, password))
+func (s *Server) deriveBucketEntryKey(username []byte, password []byte) ([]byte, error) {
+	input := s.slowHasher.Hash(serializeUsernamePassword(username, password))
 	return s.oprfServer.FullEvaluate(input, OprfInfo)
 }
 
 // BucketID returns the bucket ID for the given username
-func (s *Server) BucketID(username string) uint32 {
-	return bucketHashToID(s.bucketHasher.Hash([]byte(username)), s.bucketIDBitSize)
+func (s *Server) BucketID(username []byte) uint32 {
+	return bucketHashToID(s.bucketHasher.Hash(username), s.bucketIDBitSize)
 }
 
 // EncryptBucketEntry performs the full OPRF and encryption of metadata, without any
 // blinding steps. This is useful for precomputing the buckets of encrypted
 // items. The return value is the bucket ID (2 byte hash of username) as well
 // as the ciphertext, both encoded as byte slices.
-func (s *Server) EncryptBucketEntry(username string, password string, metadataFlag MetadataType, metadata []byte) ([]byte, error) {
+func (s *Server) EncryptBucketEntry(username, password []byte, metadataFlag MetadataType, metadata []byte) ([]byte, error) {
 	if !metadataFlag.Valid() {
 		return nil, errors.New("invalid metadata flag value: " + string(metadataFlag))
 	}
